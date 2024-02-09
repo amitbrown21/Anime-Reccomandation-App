@@ -37,11 +37,15 @@ def get_username(prompt):
 
 def get_valid_type():
     while True:
-        media_type = input("TV or Movie?: ")
+        media_type = input("TV, Movie, ONA, OVA?: ")
         if media_type == "movie" or media_type == "Movie":
             return "movie"
         if media_type == "TV" or media_type == "tv":
             return "tv"
+        if media_type == "OVA" or media_type == "ova":
+            return "ova"
+        if media_type == "ona" or media_type == "ONA":
+            return "ona"
         else:
             print("Invalid Type!")
 
@@ -99,7 +103,7 @@ def anime_rec(genre, min_score, num_anime, anime_type, start_year, end_year):
                 anime_season = jikan.seasons(year=year, season=s,
                                              parameters={'filter': anime_type})['data']
                 anime_list.append(anime_season)
-                sleep(0.8)
+                sleep(0.78)
 
         print("\n")  # Move to the next line after the progress bar
 
@@ -109,11 +113,17 @@ def anime_rec(genre, min_score, num_anime, anime_type, start_year, end_year):
                 an_demographics = an['demographics']
                 an_themes = an['themes']
                 an_score = an['score']
-                if an_score is not None and (
-                        any(ge['name'] == genre for ge in an_genre) or
-                        any(theme['name'] == genre for theme in an_themes) or
-                        any(demo['name'] == genre for demo in an_demographics)
-                ) and an_score >= min_score:
+                an_title = an['titles']
+                if an_score is not None and (((
+                                                      any(ge['name'] == genre for ge in an_genre) or
+                                                      any(theme['name'] == genre for theme in an_themes) or
+                                                      any(demo['name'] == genre for demo in an_demographics)) and
+                                              ((not any(
+                                                  'season' in name['title'].lower() or 'part' in name['title'].lower()
+                                                  for name in
+                                                  an_title)))) and
+                                             (an_score > min_score)
+                ):
                     filtered_results.append(an)
 
         random.shuffle(filtered_results)
@@ -147,8 +157,19 @@ if __name__ == "__main__":
             print(f"Score: {anime.get('score', 'N/A')}")
             print(f"Season: {anime.get('season', 'N/A')}" if 'season' in anime else "Season: N/A")
             print(f"Year: {anime.get('year', 'N/A')}")
-            print(f"Genre: {anime.get('genre', 'N')}")
+            # Extract and print genre names
+            genres = [ge['name'] for ge in anime['genres']]
+            print(f"Genre: {genres}")
+
+            # Extract and print demographics names
+            demographics = [demo['name'] for demo in anime['demographics']]
+            print(f"Demographics: {demographics}")
+
+            # Extract and print theme names
+            themes = [theme['name'] for theme in anime['themes']]
+            print(f"Themes: {themes}")
             print(f"URL: {anime.get('url', 'N/A')}")
             print("-" * 30)
-    print("\nAnime recommendations have been successfully generated!")
-    input("Press Enter to close this program.")
+
+        print("\nAnime recommendations have been successfully generated!")
+        input("Press Enter to close this program.")
